@@ -5,8 +5,9 @@ This repository contains PowerShell scripts to manage Azure Key Vault network ac
 ## Files
 
 - `Get-IpRanges.ps1` - Simple script to download and extract Azure IP ranges for a specific region
+- `Update-KeyVault-NetworkRules.ps1` - Main script to add Azure service tag IP ranges to Key Vault
+- `Remove-KeyVault-ServiceTag.ps1` - Script to remove Azure service tag IP ranges from Key Vault
 - `Update-KeyVault-NetworkRules-Complete.ps1` - Comprehensive script to update Key Vault firewall rules
-- `Update-KeyVault-NetworkRules.ps1` - Empty script file (backup/alternative)
 
 ## Prerequisites
 
@@ -43,6 +44,24 @@ To update your Key Vault network rules with a specific Azure service tag:
 .\Update-KeyVault-NetworkRules.ps1 -KeyVaultName "your-keyvault-name" -ServiceTag "Sql.WestEurope"
 ```
 
+### Remove Service Tag Rules
+
+To remove Azure service tag IP ranges from your Key Vault (preserves custom rules):
+
+```powershell
+# Test run (see what would be removed without making changes)
+.\Remove-KeyVault-ServiceTag.ps1 -KeyVaultName "your-keyvault-name" -ServiceTag "PowerBI.EastUS2" -WhatIf
+
+# Remove service tag rules
+.\Remove-KeyVault-ServiceTag.ps1 -KeyVaultName "your-keyvault-name" -ServiceTag "PowerBI.EastUS2"
+
+# Specify resource group if needed
+.\Remove-KeyVault-ServiceTag.ps1 -KeyVaultName "your-keyvault-name" -ServiceTag "AzureCloud.WestEurope" -ResourceGroupName "your-rg-name"
+
+# Remove different service tags
+.\Remove-KeyVault-ServiceTag.ps1 -KeyVaultName "your-keyvault-name" -ServiceTag "Storage.EastUS"
+```
+
 ## Performance Optimization
 
 The script is optimized for fast, efficient processing with the following features:
@@ -65,6 +84,14 @@ The script is optimized for fast, efficient processing with the following featur
 - **ResourceGroupName** (Optional) - Resource group name (auto-detected if not provided)
 - **ServiceTagVersion** (Optional) - Azure Service Tags version (default: "20250804")
 - **WhatIf** (Optional) - Preview changes without applying them
+
+### Remove-KeyVault-ServiceTag.ps1
+
+- **KeyVaultName** (Required) - Name of your Azure Key Vault
+- **ServiceTag** (Required) - Exact Azure service tag to remove (e.g., "PowerBI.EastUS2", "Storage.EastUS")
+- **ResourceGroupName** (Optional) - Resource group name (auto-detected if not provided)
+- **ServiceTagVersion** (Optional) - Azure Service Tags version (default: "20250804")
+- **WhatIf** (Optional) - Preview what would be removed without making changes
 
 ## Service Tag Examples
 
