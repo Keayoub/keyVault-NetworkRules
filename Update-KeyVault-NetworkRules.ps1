@@ -368,7 +368,8 @@ for ($i = 0; $i -lt $ipRanges.Count; $i += $batchSize) {
     if ($currentBatch % 5 -eq 0 -or $currentBatch -eq $totalBatches) {
         $processedSoFar = [math]::Min($i + $batchSize, $ipRanges.Count)
         $percentComplete = [math]::Round(($processedSoFar / $ipRanges.Count) * 100, 1)
-        Write-Host "Processed $processedSoFar/$($ipRanges.Count) ($percentComplete%)" -ForegroundColor Cyan
+        $progressMsg = "Processed " + $processedSoFar + "/" + $ipRanges.Count + " (" + $percentComplete + " percent complete)"
+        Write-Host $progressMsg -ForegroundColor Cyan
     }
 }
 
