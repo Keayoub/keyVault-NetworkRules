@@ -1,4 +1,8 @@
-# Azure Key Vault Network Rules Management
+# Az## Files
+
+- `Get-IpRanges.ps1` - Simple script to download and extract Azure IP ranges for a specific region
+- `Update-KeyVault-NetworkRules.ps1` - Main script to add Azure service tag IP ranges to Key Vault
+- `Remove-KeyVault-NetworkRules-Fast.ps1` - **Optimized removal script with parallel processing and ultra-fast rebuild mode**y Vault Network Rules Management
 
 This repository contains PowerShell scripts to manage Azure Key Vault network access rules using Azure Service Tags.
 
@@ -7,6 +11,7 @@ This repository contains PowerShell scripts to manage Azure Key Vault network ac
 - `Get-IpRanges.ps1` - Simple script to download and extract Azure IP ranges for a specific region
 - `Update-KeyVault-NetworkRules.ps1` - Main script to add Azure service tag IP ranges to Key Vault
 	- `Remove-ServiceTag-Working.ps1` - Script to remove Azure service tag IP ranges from Key Vault
+- `Remove-KeyVault-NetworkRules-Fast.ps1` - **Optimized removal script with parallel processing and ultra-fast rebuild mode**
 - `Update-KeyVault-NetworkRules-Complete.ps1` - Comprehensive script to update Key Vault firewall rules
 
 ## Prerequisites
@@ -32,16 +37,16 @@ To update your Key Vault network rules with a specific Azure service tag:
 
 ```powershell
 # Test run (see what would change without making changes)
-.\Update-KeyVault-NetworkRules.ps1 -KeyVaultName "your-keyvault-name" -ServiceTag "AzureCloud.WestEurope" -WhatIf
+.\Update-KeyVault-NetworkRules.ps1 -KeyVaultName "your-key-vault-name" -ServiceTag "AzureCloud.WestEurope" -WhatIf
 
 # Apply changes
-.\Update-KeyVault-NetworkRules.ps1 -KeyVaultName "your-keyvault-name" -ServiceTag "AzureCloud.WestEurope"
+.\Update-KeyVault-NetworkRules.ps1 -KeyVaultName "your-key-vault-name" -ServiceTag "AzureCloud.WestEurope"
 
 # Specify resource group if needed
-.\Update-KeyVault-NetworkRules.ps1 -KeyVaultName "your-keyvault-name" -ServiceTag "Storage.EastUS" -ResourceGroupName "your-rg-name"
+.\Update-KeyVault-NetworkRules.ps1 -KeyVaultName "your-key-vault-name" -ServiceTag "Storage.EastUS" -ResourceGroupName "your-rg-name"
 
 # Use different service tags
-.\Update-KeyVault-NetworkRules.ps1 -KeyVaultName "your-keyvault-name" -ServiceTag "Sql.WestEurope"
+.\Update-KeyVault-NetworkRules.ps1 -KeyVaultName "your-key-vault-name" -ServiceTag "Sql.WestEurope"
 ```
 
 ### Remove Service Tag Rules
@@ -50,16 +55,30 @@ To remove Azure service tag IP ranges from your Key Vault (preserves custom rule
 
 ```powershell
 # Test run (see what would be removed without making changes)
-.\Remove-ServiceTag-Working.ps1 -KeyVaultName "your-keyvault-name" -ServiceTag "PowerBI.EastUS2" -WhatIf
+.\Remove-KeyVault-NetworkRules-Fast.ps1 -KeyVaultName "your-key-vault-name" -ServiceTag "PowerBI.EastUS2" -WhatIf
 
-# Remove service tag rules
-.\Remove-ServiceTag-Working.ps1 -KeyVaultName "your-keyvault-name" -ServiceTag "PowerBI.EastUS2"
+# Remove service tag rules (default parallel processing)
+.\Remove-KeyVault-NetworkRules-Fast.ps1 -KeyVaultName "your-key-vault-name" -ServiceTag "PowerBI.EastUS2"
+```
+
+### Optimized Removal (Recommended - Default is Parallel Processing)
+
+**⚠️ Important: Use the correct script name: `Remove-KeyVault-NetworkRules-Fast.ps1`**
+
+For fast removal of service tags:
+
+```powershell
+# Default parallel processing mode (fast and safe for any number of IP ranges)
+.\Remove-KeyVault-NetworkRules-Fast.ps1 -KeyVaultName "your-key-vault-name" -ServiceTag "AzureCloud.EastUS"
+
+# Ultra-fast rebuild mode (maximum speed for 500+ IP ranges, brief downtime)
+.\Remove-KeyVault-NetworkRules-Fast.ps1 -KeyVaultName "your-key-vault-name" -ServiceTag "AzureCloud.EastUS" -Rebuild
+
+# Test first with WhatIf (recommended before actual removal)
+.\Remove-KeyVault-NetworkRules-Fast.ps1 -KeyVaultName "your-key-vault-name" -ServiceTag "AzureCloud.EastUS" -WhatIf
 
 # Specify resource group if needed
-.\Remove-ServiceTag-Working.ps1 -KeyVaultName "your-keyvault-name" -ServiceTag "AzureCloud.WestEurope" -ResourceGroupName "your-rg-name"
-
-# Remove different service tags
-.\Remove-ServiceTag-Working.ps1 -KeyVaultName "your-keyvault-name" -ServiceTag "Storage.EastUS"
+.\Remove-KeyVault-NetworkRules-Fast.ps1 -KeyVaultName "your-key-vault-name" -ServiceTag "Storage.EastUS" -ResourceGroupName "your-rg-name"
 ```
 
 ## Performance Optimization
@@ -75,6 +94,22 @@ The script is optimized for fast, efficient processing with the following featur
 - **~200 IP ranges**: ~1 minute
 - **~500 IP ranges**: ~2-3 minutes
 
+## Removal Performance Comparison
+
+For removing service tag rules, choose the best method based on the number of IP ranges:
+
+| Method | 50 IPs | 200 IPs | 500 IPs | 1000+ IPs | Downtime |
+|--------|---------|---------|---------|-----------|----------|
+| **Standard Removal** | 30 sec | 2 min | 5 min | 10+ min | None |
+| **Parallel Processing (Default)** | 10 sec | 30 sec | 1 min | 2-3 min | None |
+| **Ultra-Fast Rebuild** | 5 sec | 5 sec | 10 sec | 15 sec | Brief* |
+
+*Ultra-fast rebuild mode temporarily blocks all access while clearing and rebuilding rules
+
+**Recommendations:**
+- **Any number of IP ranges**: Use default parallel processing (`Remove-KeyVault-NetworkRules-Fast.ps1`)
+- **500+ IP ranges with acceptable brief downtime**: Use ultra-fast rebuild mode (`-Rebuild` parameter)
+
 ## Parameters
 
 ### Update-KeyVault-NetworkRules.ps1
@@ -85,13 +120,14 @@ The script is optimized for fast, efficient processing with the following featur
 - **ServiceTagVersion** (Optional) - Azure Service Tags version (default: "20250804")
 - **WhatIf** (Optional) - Preview changes without applying them
 
-### Remove-ServiceTag-Working.ps1
+### Remove-KeyVault-NetworkRules-Fast.ps1 (Recommended - Default Parallel Processing)
 
 - **KeyVaultName** (Required) - Name of your Azure Key Vault
-- **ServiceTag** (Required) - Exact Azure service tag to remove (e.g., "PowerBI.EastUS2", "Storage.EastUS")
+- **ServiceTag** (Required) - Exact Azure service tag to remove (e.g., "AzureCloud.EastUS", "Storage.EastUS")
 - **ResourceGroupName** (Optional) - Resource group name (auto-detected if not provided)
 - **ServiceTagVersion** (Optional) - Azure Service Tags version (default: "20250804")
 - **WhatIf** (Optional) - Preview what would be removed without making changes
+- **Rebuild** (Optional) - Use ultra-fast rebuild mode instead of default parallel processing
 
 ## Service Tag Examples
 
@@ -158,6 +194,20 @@ The script now includes intelligent region validation to prevent Azure cross-reg
 - The script requires confirmation before making changes
 
 ## Troubleshooting
+
+### Script Not Found Error
+
+If you get an error like "Remove-ServiceTag-Working.ps1 not found", make sure you're using the correct script names:
+
+- ✅ **Correct**: `Remove-KeyVault-NetworkRules-Fast.ps1` (for removing service tags)
+- ✅ **Correct**: `Update-KeyVault-NetworkRules.ps1` (for adding/updating service tags)
+- ❌ **Incorrect**: `Remove-ServiceTag-Working.ps1` (old/deprecated name)
+
+Current workspace files:
+```powershell
+# List files to verify script names
+Get-ChildItem *.ps1
+```
 
 ### Azure CLI Not Found
 ```bash
